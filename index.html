@@ -331,6 +331,8 @@
       object-fit: contain;
       user-select: none;
       touch-action: pan-y;
+      transition: transform 240ms ease, opacity 240ms ease;
+      will-change: transform, opacity;
     }
 
     .nav-hit {
@@ -489,7 +491,7 @@
       <header class="viewer-header">
         <div class="viewer-title">
           <div class="viewer-title-main">허리에 중요한 장요근의 모든 것</div>
-          <div class="viewer-title-sub">좌우를 눌러 넘겨보세요</div>
+          <div class="viewer-title-sub">이미지 좌측/우측을 눌러 넘겨보세요</div>
         </div>
 
         <button class="close-btn" type="button" onclick="closeViewer()" aria-label="닫기">×</button>
@@ -499,15 +501,12 @@
         <button class="nav-hit prev" type="button" onclick="prevSlide()" aria-label="이전 장"></button>
         <img class="slide-image" id="slideImage" src="1.webp" alt="장요근 카드뉴스 1번" />
         <button class="nav-hit next" type="button" onclick="nextSlide()" aria-label="다음 장"></button>
-
-        <button class="arrow prev" type="button" onclick="prevSlide()" aria-label="이전 장">‹</button>
-        <button class="arrow next" type="button" onclick="nextSlide()" aria-label="다음 장">›</button>
       </div>
 
       <footer class="viewer-footer">
         <div class="progress-row">
           <div class="counter" id="counter">1 / 9</div>
-          <div class="hint">스와이프 또는 좌우 버튼</div>
+          <div class="hint">스와이프 또는 좌우 터치</div>
         </div>
 
         <div class="dots" id="dots"></div>
@@ -586,15 +585,49 @@
       )).join("");
     }
 
-    function updateSlide() {
+    function updateSlide(direction = 0) {
       const slide = slides[currentIndex];
-      slideImage.src = slide.src;
-      slideImage.alt = slide.alt;
-      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
 
-      document.querySelectorAll(".dot").forEach((dot, index) => {
-        dot.classList.toggle("active", index === currentIndex);
-      });
+      const applyContent = () => {
+        slideImage.src = slide.src;
+        slideImage.alt = slide.alt;
+        counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+
+        document.querySelectorAll(".dot").forEach((dot, index) => {
+          dot.classList.toggle("active", index === currentIndex);
+        });
+      };
+
+      if (direction === 0) {
+        applyContent();
+        slideImage.style.transition = "none";
+        slideImage.style.transform = "translateX(0)";
+        slideImage.style.opacity = "1";
+        requestAnimationFrame(() => {
+          slideImage.style.transition = "transform 240ms ease, opacity 240ms ease";
+        });
+        return;
+      }
+
+      const exitX = direction > 0 ? "-34px" : "34px";
+      const enterX = direction > 0 ? "34px" : "-34px";
+
+      slideImage.style.transition = "transform 180ms ease, opacity 180ms ease";
+      slideImage.style.transform = `translateX(${exitX})`;
+      slideImage.style.opacity = "0";
+
+      window.setTimeout(() => {
+        applyContent();
+        slideImage.style.transition = "none";
+        slideImage.style.transform = `translateX(${enterX})`;
+        slideImage.style.opacity = "0";
+
+        requestAnimationFrame(() => {
+          slideImage.style.transition = "transform 240ms ease, opacity 240ms ease";
+          slideImage.style.transform = "translateX(0)";
+          slideImage.style.opacity = "1";
+        });
+      }, 180);
     }
 
     function openViewer(index) {
@@ -613,17 +646,20 @@
 
     function nextSlide() {
       currentIndex = (currentIndex + 1) % slides.length;
-      updateSlide();
+      updateSlide(1);
     }
 
     function prevSlide() {
       currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-      updateSlide();
+      updateSlide(-1);
     }
 
     function goToSlide(index) {
+      if (index === currentIndex) return;
+
+      const direction = index > currentIndex ? 1 : -1;
       currentIndex = index;
-      updateSlide();
+      updateSlide(direction);
     }
 
     imageStage.addEventListener("touchstart", event => {
