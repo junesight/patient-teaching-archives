@@ -1,0 +1,651 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script>
+(function(){
+  var __k="b534c200-b7c9-4f38-bf6a-7b17873a2512";
+  var __a=null;
+  var __preload=null;
+  if(!__k)return;
+  var _f=window.fetch;
+  // S3 URL → file_key 추출 후 __a 매핑 lookup → assets/ 로컬 경로 치환
+  // 응답에 새 signed URL이 와도 같은 file_key면 같은 assets/ → 영구 작동
+  function patchUrls(data){
+    if(!__a)return data;
+    try{
+      var s=JSON.stringify(data);
+      // 응답 안의 모든 S3 URL을 정규식으로 찾고, file_key 추출 → 매핑 lookup
+      s=s.replace(/https:\/\/prod-files-secure\.s3\.amazonaws\.com\/[^"\s<>]+/g,function(url){
+        var m=url.match(/\.amazonaws\.com\/([^?\\]+)/);
+        if(!m)return url;
+        var key=m[1].replace(/\\u002F/g,"/");
+        return __a[key]||url;
+      });
+      return JSON.parse(s);
+    }catch(e){return data;}
+  }
+  function callMisiso(method,path,body){
+    return _f("https://misiso.com/api/notion/deploy-proxy",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({deployKey:__k,path:path,method:method,body:body})
+    }).then(function(r){
+      var status=r.status;
+      return r.json().then(function(data){return {status:status,data:patchUrls(data)};});
+    });
+  }
+  // preload pattern — 페이지 로드와 병렬로 정적 fetch 호출 미리 시작
+  var __preloadCache={};
+  if(__preload){
+    for(var i=0;i<__preload.length;i++){
+      (function(c){
+        var key=c.method+":"+c.path+":"+(c.body?JSON.stringify(c.body):"");
+        __preloadCache[key]=callMisiso(c.method,c.path,c.body);
+      })(__preload[i]);
+    }
+  }
+  window.fetch=function(url,opts){
+    var u=typeof url==="string"?url:String(url);
+    if(!u.startsWith("/api/notion/"))return _f.apply(this,arguments);
+    var path=u.slice("/api/notion".length);
+    var method=(opts&&opts.method)||"GET";
+    var body;
+    try{body=opts&&opts.body?JSON.parse(opts.body):undefined;}catch(e){body=opts&&opts.body;}
+    var ck=method+":"+path+":"+(body?JSON.stringify(body):"");
+    var promise=__preloadCache[ck];
+    if(promise){delete __preloadCache[ck];}
+    else{promise=callMisiso(method,path,body);}
+    return promise.then(function(res){
+      return new Response(JSON.stringify(res.data),{
+        status:res.status,
+        headers:{"Content-Type":"application/json"}
+      });
+    });
+  };
+})();
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://misiso.com" crossorigin/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="목포 부부한의원 티칭 자료 아카이브"/>
+<meta property="og:description" content="환자분들께 설명드리기 위한 자료를 모아둔 페이지입니다."/>
+<title>목포 부부한의원 티칭 자료 아카이브</title>
+<meta name="description" content="환자분들께 설명드리기 위한 자료를 모아둔 페이지입니다."/>
+<meta property="og:image" content="https://junesight.github.io/patient-teaching-archives/og-image-00goi6zs.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://junesight.github.io/patient-teaching-archives/og-image-00goi6zs.png"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'6'%20fill%3D'%236366f1'%2F%3E%3Ctext%20x%3D'16'%20y%3D'22'%20text-anchor%3D'middle'%20font-size%3D'18'%20fill%3D'white'%20font-family%3D'sans-serif'%3E%EB%AA%A9%3C%2Ftext%3E%3C%2Fsvg%3E"/>
+<script src="https://cdn.tailwindcss.com"></script>
+</head><body><!DOCTYPE html>
+<html lang="ko">
+<head>
+  
+  
+
+  
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --blue: #073b93;
+      --red: #ff3b1f;
+      --border: #dbe7ff;
+      --shadow: 0 12px 32px rgba(7, 59, 147, 0.12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(7, 59, 147, 0.08), transparent 36%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding-bottom: 32px;
+    }
+
+    .header {
+      padding: 26px 18px 16px;
+      background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.86) 72%, rgba(245,247,251,0) 100%);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+
+    .clinic {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eaf1ff;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .clinic-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--red);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.25;
+      letter-spacing: -0.05em;
+      color: var(--blue);
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      padding: 8px 18px 0;
+      font-size: 15px;
+      font-weight: 900;
+      color: #1f2937;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 13px;
+      padding: 12px 18px 28px;
+    }
+
+    .material-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .material-card:active {
+      transform: scale(0.98);
+      box-shadow: 0 6px 18px rgba(7, 59, 147, 0.14);
+    }
+
+    .thumb {
+      position: relative;
+      aspect-ratio: 1 / 1.2;
+      background: #eef4ff;
+      overflow: hidden;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .badge {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .card-body {
+      padding: 12px 12px 14px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #111827;
+    }
+
+    .card-desc {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      letter-spacing: -0.02em;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      background: rgba(3, 12, 33, 0.72);
+    }
+
+    .modal-backdrop.show {
+      display: block;
+    }
+
+    .viewer {
+      position: fixed;
+      inset: 0;
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      background: #0b1220;
+      color: #ffffff;
+    }
+
+    .viewer-header {
+      height: 58px;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(11, 18, 32, 0.96);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .viewer-title {
+      min-width: 0;
+    }
+
+    .viewer-title-main {
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 290px;
+    }
+
+    .viewer-title-sub {
+      margin-top: 2px;
+      color: rgba(255,255,255,0.62);
+      font-size: 12px;
+    }
+
+    .close-btn {
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      color: #ffffff;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .image-stage {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0 74px;
+      overflow: hidden;
+    }
+
+    .slide-image {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      user-select: none;
+      touch-action: pan-y;
+    }
+
+    .nav-hit {
+      position: absolute;
+      top: 0;
+      bottom: 74px;
+      width: 34%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .nav-hit.prev {
+      left: 0;
+    }
+
+    .nav-hit.next {
+      right: 0;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.36);
+      color: #ffffff;
+      font-size: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .arrow.prev {
+      left: 10px;
+    }
+
+    .arrow.next {
+      right: 10px;
+    }
+
+    .viewer-footer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 74px;
+      padding: 10px 14px 14px;
+      background: linear-gradient(180deg, rgba(11,18,32,0), rgba(11,18,32,0.96) 24%);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .counter {
+      font-size: 13px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.62);
+    }
+
+    .dots {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+    }
+
+    .dot {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.22);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: #ffffff;
+    }
+
+    .bottom-note {
+      margin: 2px 18px 0;
+      padding: 14px 15px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      box-shadow: 0 8px 24px rgba(7, 59, 147, 0.08);
+    }
+
+    @media (min-width: 521px) {
+      .viewer {
+        border-left: 1px solid rgba(255,255,255,0.1);
+        border-right: 1px solid rgba(255,255,255,0.1);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="clinic">
+        <span class="clinic-dot"></span>
+        목포 부부한의원
+      </div>
+
+      <h1>환자 티칭 자료실</h1>
+
+      <p class="subtitle">
+        진료 중 설명드린 내용을 집에서도 다시 확인하실 수 있습니다.
+      </p>
+    </header>
+
+    <div class="section-title">오늘의 티칭 자료</div>
+
+    <section class="grid">
+      <button class="material-card" type="button" onclick="openViewer(0)">
+        <div class="thumb">
+          <img src="1.png" alt="허리에 중요한 장요근의 모든 것 표지" />
+          <div class="badge">9장 카드뉴스</div>
+        </div>
+
+        <div class="card-body">
+          <div class="card-title">허리에 중요한 장요근의 모든 것</div>
+          <div class="card-desc">
+            오래 앉아 있거나 허리를 숙이는 습관이 허리와 골반에 미치는 영향을 안내합니다.
+          </div>
+        </div>
+      </button>
+    </section>
+
+    <div class="bottom-note">
+      이 자료는 진료 중 설명을 보완하기 위한 안내입니다. 통증이 지속되거나 증상이 악화되면 의료진과 상담해주세요.
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <section class="viewer" role="dialog" aria-modal="true" aria-label="장요근 카드뉴스 보기">
+      <header class="viewer-header">
+        <div class="viewer-title">
+          <div class="viewer-title-main">허리에 중요한 장요근의 모든 것</div>
+          <div class="viewer-title-sub">좌우를 눌러 넘겨보세요</div>
+        </div>
+
+        <button class="close-btn" type="button" onclick="closeViewer()" aria-label="닫기">×</button>
+      </header>
+
+      <div class="image-stage" id="imageStage">
+        <button class="nav-hit prev" type="button" onclick="prevSlide()" aria-label="이전 장"></button>
+        <img class="slide-image" id="slideImage" src="1.png" alt="장요근 카드뉴스 1번" />
+        <button class="nav-hit next" type="button" onclick="nextSlide()" aria-label="다음 장"></button>
+
+        <button class="arrow prev" type="button" onclick="prevSlide()" aria-label="이전 장">‹</button>
+        <button class="arrow next" type="button" onclick="nextSlide()" aria-label="다음 장">›</button>
+      </div>
+
+      <footer class="viewer-footer">
+        <div class="progress-row">
+          <div class="counter" id="counter">1 / 9</div>
+          <div class="hint">스와이프 또는 좌우 버튼</div>
+        </div>
+
+        <div class="dots" id="dots"></div>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    const slides = [
+      {
+        src: "1.png",
+        alt: "허리에 중요한 장요근의 모든 것"
+      },
+      {
+        src: "2.png",
+        alt: "장요근은 어떤 근육인가요?"
+      },
+      {
+        src: "3.png",
+        alt: "장요근이 왜 자꾸 짧아질까요?"
+      },
+      {
+        src: "4.png",
+        alt: "장요근이 짧아지면 어떤 증상이 나타나나요?"
+      },
+      {
+        src: "5.png",
+        alt: "장요근이 짧아지면 다리에는 어떤 변화가 생길까요?"
+      },
+      {
+        src: "6.png",
+        alt: "어떤 치료가 필요한가요?"
+      },
+      {
+        src: "7.png",
+        alt: "어떤 운동이 좋나요?"
+      },
+      {
+        src: "8.png",
+        alt: "생활 습관 관리는 어떻게 해야 하나요?"
+      },
+      {
+        src: "9.png",
+        alt: "장요근 관리, 건강한 허리를 위해 꼭 필요합니다"
+      }
+    ];
+
+    let currentIndex = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const slideImage = document.getElementById("slideImage");
+    const counter = document.getElementById("counter");
+    const dots = document.getElementById("dots");
+    const imageStage = document.getElementById("imageStage");
+
+    function buildDots() {
+      dots.innerHTML = slides.map((_, index) => (
+        `<button class="dot" type="button" onclick="goToSlide(${index})" aria-label="${index + 1}번 장으로 이동"></button>`
+      )).join("");
+    }
+
+    function updateSlide() {
+      const slide = slides[currentIndex];
+      slideImage.src = slide.src;
+      slideImage.alt = slide.alt;
+      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+
+      document.querySelectorAll(".dot").forEach((dot, index) => {
+        dot.classList.toggle("active", index === currentIndex);
+      });
+    }
+
+    function openViewer(index) {
+      currentIndex = index;
+      modalBackdrop.classList.add("show");
+      modalBackdrop.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      updateSlide();
+    }
+
+    function closeViewer() {
+      modalBackdrop.classList.remove("show");
+      modalBackdrop.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateSlide();
+    }
+
+    function prevSlide() {
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      updateSlide();
+    }
+
+    function goToSlide(index) {
+      currentIndex = index;
+      updateSlide();
+    }
+
+    imageStage.addEventListener("touchstart", event => {
+      touchStartX = event.changedTouches[0].clientX;
+      touchStartY = event.changedTouches[0].clientY;
+    }, { passive: true });
+
+    imageStage.addEventListener("touchend", event => {
+      const touchEndX = event.changedTouches[0].clientX;
+      const touchEndY = event.changedTouches[0].clientY;
+
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      if (Math.abs(diffX) > 42 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX < 0) {
+          nextSlide();
+        } else {
+          prevSlide();
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener("keydown", event => {
+      if (!modalBackdrop.classList.contains("show")) return;
+
+      if (event.key === "Escape") closeViewer();
+      if (event.key === "ArrowRight") nextSlide();
+      if (event.key === "ArrowLeft") prevSlide();
+    });
+
+    modalBackdrop.addEventListener("click", event => {
+      if (event.target === modalBackdrop) closeViewer();
+    });
+
+    buildDots();
+    updateSlide();
+  </script>
+</body>
+</html></body></html>
