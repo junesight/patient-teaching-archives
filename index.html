@@ -466,7 +466,7 @@
     <section class="grid">
       <button class="material-card" type="button" onclick="openViewer(0)">
         <div class="thumb">
-          <img src="1.png" alt="허리에 중요한 장요근의 모든 것 표지" />
+          <img src="1.webp" alt="허리에 중요한 장요근의 모든 것 표지" />
           <div class="badge">9장 카드뉴스</div>
         </div>
 
@@ -497,7 +497,7 @@
 
       <div class="image-stage" id="imageStage">
         <button class="nav-hit prev" type="button" onclick="prevSlide()" aria-label="이전 장"></button>
-        <img class="slide-image" id="slideImage" src="1.png" alt="장요근 카드뉴스 1번" />
+        <img class="slide-image" id="slideImage" src="1.webp" alt="장요근 카드뉴스 1번" />
         <button class="nav-hit next" type="button" onclick="nextSlide()" aria-label="다음 장"></button>
 
         <button class="arrow prev" type="button" onclick="prevSlide()" aria-label="이전 장">‹</button>
@@ -518,39 +518,39 @@
   <script>
     const slides = [
       {
-        src: "1.png",
+        src: "1.webp",
         alt: "허리에 중요한 장요근의 모든 것"
       },
       {
-        src: "2.png",
+        src: "2.webp",
         alt: "장요근은 어떤 근육인가요?"
       },
       {
-        src: "3.png",
+        src: "3.webp",
         alt: "장요근이 왜 자꾸 짧아질까요?"
       },
       {
-        src: "4.png",
+        src: "4.webp",
         alt: "장요근이 짧아지면 어떤 증상이 나타나나요?"
       },
       {
-        src: "5.png",
+        src: "5.webp",
         alt: "장요근이 짧아지면 다리에는 어떤 변화가 생길까요?"
       },
       {
-        src: "6.png",
+        src: "6.webp",
         alt: "어떤 치료가 필요한가요?"
       },
       {
-        src: "7.png",
+        src: "7.webp",
         alt: "어떤 운동이 좋나요?"
       },
       {
-        src: "8.png",
+        src: "8.webp",
         alt: "생활 습관 관리는 어떻게 해야 하나요?"
       },
       {
-        src: "9.png",
+        src: "9.webp",
         alt: "장요근 관리, 건강한 허리를 위해 꼭 필요합니다"
       }
     ];
@@ -564,6 +564,21 @@
     const counter = document.getElementById("counter");
     const dots = document.getElementById("dots");
     const imageStage = document.getElementById("imageStage");
+
+    function preloadImages() {
+      const run = () => {
+        slides.forEach(slide => {
+          const img = new Image();
+          img.src = slide.src;
+        });
+      };
+
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(run);
+      } else {
+        setTimeout(run, 800);
+      }
+    }
 
     function buildDots() {
       dots.innerHTML = slides.map((_, index) => (
@@ -646,6 +661,7 @@
 
     buildDots();
     updateSlide();
+    preloadImages();
   </script>
 </body>
 </html></body></html>
