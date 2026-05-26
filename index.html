@@ -322,6 +322,33 @@
       overflow: hidden;
     }
 
+    .carousel {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      touch-action: pan-x pan-y;
+    }
+
+    .carousel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .slide {
+      flex: 0 0 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+    }
+
     .slide-image {
       max-width: 100%;
       max-height: 100%;
@@ -330,9 +357,7 @@
       display: block;
       object-fit: contain;
       user-select: none;
-      touch-action: pan-y;
-      transition: transform 240ms ease, opacity 240ms ease;
-      will-change: transform, opacity;
+      pointer-events: none;
     }
 
     .nav-hit {
@@ -498,9 +523,35 @@
       </header>
 
       <div class="image-stage" id="imageStage">
-        <button class="nav-hit prev" type="button" onclick="prevSlide()" aria-label="이전 장"></button>
-        <img class="slide-image" id="slideImage" src="1.webp" alt="장요근 카드뉴스 1번" />
-        <button class="nav-hit next" type="button" onclick="nextSlide()" aria-label="다음 장"></button>
+        <div class="carousel" id="carousel">
+          <div class="slide">
+            <img class="slide-image" src="1.webp" alt="허리에 중요한 장요근의 모든 것" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="2.webp" alt="장요근은 어떤 근육인가요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="3.webp" alt="장요근이 왜 자꾸 짧아질까요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="4.webp" alt="장요근이 짧아지면 어떤 증상이 나타나나요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="5.webp" alt="장요근이 짧아지면 다리에는 어떤 변화가 생길까요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="6.webp" alt="어떤 치료가 필요한가요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="7.webp" alt="어떤 운동이 좋나요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="8.webp" alt="생활 습관 관리는 어떻게 해야 하나요?" />
+          </div>
+          <div class="slide">
+            <img class="slide-image" src="9.webp" alt="장요근 관리, 건강한 허리를 위해 꼭 필요합니다" />
+          </div>
+        </div>
       </div>
 
       <footer class="viewer-footer">
@@ -559,7 +610,7 @@
     let touchStartY = 0;
 
     const modalBackdrop = document.getElementById("modalBackdrop");
-    const slideImage = document.getElementById("slideImage");
+    const carousel = document.getElementById("carousel");
     const counter = document.getElementById("counter");
     const dots = document.getElementById("dots");
     const imageStage = document.getElementById("imageStage");
@@ -585,57 +636,31 @@
       )).join("");
     }
 
-    function updateSlide(direction = 0) {
-      const slide = slides[currentIndex];
+    function updateProgress() {
+      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
 
-      const applyContent = () => {
-        slideImage.src = slide.src;
-        slideImage.alt = slide.alt;
-        counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+      document.querySelectorAll(".dot").forEach((dot, index) => {
+        dot.classList.toggle("active", index === currentIndex);
+      });
+    }
 
-        document.querySelectorAll(".dot").forEach((dot, index) => {
-          dot.classList.toggle("active", index === currentIndex);
-        });
-      };
-
-      if (direction === 0) {
-        applyContent();
-        slideImage.style.transition = "none";
-        slideImage.style.transform = "translateX(0)";
-        slideImage.style.opacity = "1";
-        requestAnimationFrame(() => {
-          slideImage.style.transition = "transform 240ms ease, opacity 240ms ease";
-        });
-        return;
-      }
-
-      const exitX = direction > 0 ? "-34px" : "34px";
-      const enterX = direction > 0 ? "34px" : "-34px";
-
-      slideImage.style.transition = "transform 180ms ease, opacity 180ms ease";
-      slideImage.style.transform = `translateX(${exitX})`;
-      slideImage.style.opacity = "0";
-
-      window.setTimeout(() => {
-        applyContent();
-        slideImage.style.transition = "none";
-        slideImage.style.transform = `translateX(${enterX})`;
-        slideImage.style.opacity = "0";
-
-        requestAnimationFrame(() => {
-          slideImage.style.transition = "transform 240ms ease, opacity 240ms ease";
-          slideImage.style.transform = "translateX(0)";
-          slideImage.style.opacity = "1";
-        });
-      }, 180);
+    function goToSlide(index, behavior = "smooth") {
+      currentIndex = Math.max(0, Math.min(slides.length - 1, index));
+      carousel.scrollTo({
+        left: carousel.clientWidth * currentIndex,
+        behavior
+      });
+      updateProgress();
     }
 
     function openViewer(index) {
-      currentIndex = index;
       modalBackdrop.classList.add("show");
       modalBackdrop.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
-      updateSlide();
+
+      requestAnimationFrame(() => {
+        goToSlide(index, "auto");
+      });
     }
 
     function closeViewer() {
@@ -645,43 +670,47 @@
     }
 
     function nextSlide() {
-      currentIndex = (currentIndex + 1) % slides.length;
-      updateSlide(1);
+      goToSlide(currentIndex + 1);
     }
 
     function prevSlide() {
-      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-      updateSlide(-1);
+      goToSlide(currentIndex - 1);
     }
 
-    function goToSlide(index) {
-      if (index === currentIndex) return;
+    let scrollTimer = null;
+    carousel.addEventListener("scroll", () => {
+      window.clearTimeout(scrollTimer);
 
-      const direction = index > currentIndex ? 1 : -1;
-      currentIndex = index;
-      updateSlide(direction);
-    }
+      scrollTimer = window.setTimeout(() => {
+        const index = Math.round(carousel.scrollLeft / carousel.clientWidth);
 
-    imageStage.addEventListener("touchstart", event => {
-      touchStartX = event.changedTouches[0].clientX;
-      touchStartY = event.changedTouches[0].clientY;
-    }, { passive: true });
-
-    imageStage.addEventListener("touchend", event => {
-      const touchEndX = event.changedTouches[0].clientX;
-      const touchEndY = event.changedTouches[0].clientY;
-
-      const diffX = touchEndX - touchStartX;
-      const diffY = touchEndY - touchStartY;
-
-      if (Math.abs(diffX) > 42 && Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX < 0) {
-          nextSlide();
-        } else {
-          prevSlide();
+        if (index !== currentIndex) {
+          currentIndex = Math.max(0, Math.min(slides.length - 1, index));
+          updateProgress();
         }
-      }
+      }, 80);
     }, { passive: true });
+
+    imageStage.addEventListener("pointerdown", event => {
+      touchStartX = event.clientX;
+      touchStartY = event.clientY;
+    });
+
+    imageStage.addEventListener("pointerup", event => {
+      const diffX = event.clientX - touchStartX;
+      const diffY = event.clientY - touchStartY;
+
+      if (Math.abs(diffX) > 8 || Math.abs(diffY) > 8) return;
+
+      const rect = imageStage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+
+      if (x < rect.width * 0.33) {
+        prevSlide();
+      } else if (x > rect.width * 0.67) {
+        nextSlide();
+      }
+    });
 
     document.addEventListener("keydown", event => {
       if (!modalBackdrop.classList.contains("show")) return;
@@ -696,7 +725,7 @@
     });
 
     buildDots();
-    updateSlide();
+    updateProgress();
     preloadImages();
   </script>
 </body>
